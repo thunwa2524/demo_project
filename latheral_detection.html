@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Arm Health Dashboard</title>
+    <style>
+        body.arm-theme {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #ffe4e6, #fff1f2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .app {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            box-sizing: border-box;
+        }
+
+        /* Left Panel - Video & Canvas */
+        .left-panel {
+            flex: 2 1 300px;
+            min-width: 280px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .left-panel video,
+        .left-panel canvas {
+            width: 100%;
+            max-width: 480px;
+            aspect-ratio: 4/3;
+            /* keep video ratio */
+            border-radius: 16px;
+            background: #e5e7eb;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            flex: 1 1 220px;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: clamp(10px, 2vw, 15px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15);
+            flex-shrink: 0;
+        }
+
+        .stat {
+            font-size: clamp(14px, 2vw, 18px);
+            margin: 6px 0;
+        }
+
+        .risk {
+            padding: clamp(10px, 2vw, 12px);
+            border-radius: 14px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.4s ease;
+        }
+
+        .low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .mid {
+            background: #fef9c3;
+            color: #92400e;
+            animation: pulseSoft 2s infinite;
+        }
+
+        .high {
+            background: #fee2e2;
+            color: #991b1b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(255, 0, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+
+        @keyframes pulseSoft {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.3);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 165, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);
+            }
+        }
+
+        .sketchfab-embed-wrapper {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15);
+        }
+
+        .sketchfab-embed-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .upload {
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            padding: clamp(15px, 2vw, 20px);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid #ef4444;
+            flex-shrink: 0;
+        }
+
+        .upload::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: 18px;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.5), transparent 70%);
+            opacity: 0;
+            transition: 0.4s;
+            z-index: -1;
+        }
+
+        .upload:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
+        }
+
+        .upload:hover::before {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        input {
+            display: none;
+        }
+
+        @media (max-width: 800px) {
+            .app {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .left-panel,
+            .right-panel {
+                flex: 1 1 100%;
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+
+<body class="arm-theme">
+
+    <div class="app">
+
+        <div class="left-panel">
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="right-panel">
+
+            <div class="card sketchfab-embed-wrapper">
+                <iframe title="Arm Anatomy" frameborder="0" allowfullscreen
+                    src="https://sketchfab.com/models/874c8868bdb942f1a0dab2f023e16ee3/embed">
+                </iframe>
+            </div>
+
+            <div class="card">
+                <div class="stat">Right Arm: <span id="rVal">--</span></div>
+                <div class="stat">Left Arm: <span id="lVal">--</span></div>
+            </div>
+
+            <div id="riskBox" class="card risk low">
+                Low Risk
+            </div>
+
+            <label class="card upload">
+                <div style="font-size:40px;">📤</div>
+                <div style="font-weight:600;">Upload Image</div>
+                <div style="font-size:13px;color:#666;">Select a photo for analysis</div>
+                <input type="file" id="imageInput" accept="image/*">
+            </label>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const rVal = document.getElementById('rVal');
+        const lVal = document.getElementById('lVal');
+        const riskBox = document.getElementById('riskBox');
+        const imageInput = document.getElementById('imageInput');
+
+        let currentImage = null;
+
+        // Resize canvas to match video/image
+        function resizeCanvas() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        }
+
+        video.addEventListener('loadedmetadata', resizeCanvas);
+
+        const pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+        pose.setOptions({ modelComplexity: 1, smoothLandmarks: true });
+
+        function angle(A, B, C) {
+            const AB = { x: A.x - B.x, y: A.y - B.y };
+            const CB = { x: C.x - B.x, y: C.y - B.y };
+            const dot = AB.x * CB.x + AB.y * CB.y;
+            const mag = Math.sqrt(AB.x ** 2 + AB.y ** 2) * Math.sqrt(CB.x ** 2 + CB.y ** 2);
+            return Math.acos(dot / mag) * (180 / Math.PI);
+        }
+
+        function area(A, B, C) { return Math.abs(A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y)) / 2; }
+        function norm(a, s, h) { const d = Math.abs(s.y - h.y); return a / (d * d); }
+
+        let pulse = 0;
+
+        function drawJoint(p, color) {
+            const x = p.x * canvas.width;
+            const y = p.y * canvas.height;
+            const size = 5 + Math.sin(pulse) * 2;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function drawLine(p1, p2, color) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+            ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.stroke();
+        }
+
+        function drawSkeleton(lm, color) {
+            drawLine(lm[12], lm[14], color); // right arm
+            drawLine(lm[14], lm[16], color);
+            drawLine(lm[11], lm[13], color); // left arm
+            drawLine(lm[13], lm[15], color);
+            drawLine(lm[11], lm[12], "white");
+            drawLine(lm[23], lm[24], "white");
+            drawLine(lm[11], lm[23], "white");
+            drawLine(lm[12], lm[24], "white");
+        }
+
+        function drawCenter(lS, rS, lH, rH) {
+            const midX = (lS.x + rS.x) / 2;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(midX * canvas.width, lS.y * canvas.height);
+            ctx.lineTo(midX * canvas.width, lH.y * canvas.height);
+            ctx.strokeStyle = "yellow";
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        pose.onResults(res => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(currentImage || res.image, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            if (!res.poseLandmarks) return;
+            pulse += 0.05;
+
+            let lm = res.poseLandmarks.map(p => ({ x: 1 - p.x, y: p.y }));
+
+            const rS = lm[12], rE = lm[14], rH = lm[24];
+            const lS = lm[11], lE = lm[13], lH = lm[23];
+
+            const rA = norm(area(rS, rE, rH), rS, rH);
+            const lA = norm(area(lS, lE, lH), lS, lH);
+            const rAng = angle(rH, rS, rE);
+            const lAng = angle(lH, lS, lE);
+            const diff = Math.abs(rA - lA);
+
+            let risk = "Low Risk", cls = "low", color = "rgb(34,197,94)";
+
+            if ((rA < 0.015 && rAng < 70) || (lA < 0.015 && lAng < 70)) {
+                risk = "High Risk"; cls = "high"; color = "rgb(239,68,68)";
+            } else if (rA < 0.015 || lA < 0.015 || diff > 0.01) {
+                risk = "Moderate Risk"; cls = "mid"; color = "rgb(249,115,22)";
+            }
+
+            rVal.innerHTML = `${rAng.toFixed(0)}°`;
+            lVal.innerHTML = `${lAng.toFixed(0)}°`;
+            riskBox.className = "card risk " + cls;
+            riskBox.innerHTML = risk;
+
+            drawSkeleton(lm, color);
+            drawCenter(lS, rS, lH, rH);
+            [rS, rE, rH, lS, lE, lH].forEach(p => drawJoint(p, color));
+        });
+
+        const camera = new Camera(video, { onFrame: async () => { if (!currentImage) await pose.send({ image: video }); }, width: 480, height: 360 });
+        camera.start();
+
+        imageInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = async () => {
+                currentImage = img;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                await pose.send({ image: img });
+            };
+            img.src = URL.createObjectURL(file);
+        });
+    </script>
+
+</body>
+
+</html>

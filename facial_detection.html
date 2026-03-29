@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Facial Health Dashboard</title>
+    <style>
+        body.facial-theme {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #eef2ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .app {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            box-sizing: border-box;
+        }
+
+        .left-panel {
+            flex: 2 1 300px;
+            min-width: 280px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 20px 40px rgba(96, 165, 250, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .right-panel {
+            flex: 1 1 200px;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: clamp(10px, 2vw, 15px);
+            box-shadow: 0 10px 25px rgba(96, 165, 250, 0.15);
+        }
+
+        /* Sketchfab 3D model */
+        .sketchfab-embed-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            /* square */
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(96, 165, 250, 0.15);
+        }
+
+        .sketchfab-embed-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        video,
+        canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            background: #e5e7eb;
+        }
+
+        .stat {
+            font-size: clamp(14px, 2vw, 16px);
+            margin: 6px 0;
+        }
+
+        .risk {
+            padding: clamp(10px, 2vw, 12px);
+            border-radius: 14px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .mid {
+            background: #fef9c3;
+            color: #92400e;
+            animation: pulseSoft 2s infinite;
+        }
+
+        .high {
+            background: #fee2e2;
+            color: #991b1b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(255, 0, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+
+        @keyframes pulseSoft {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.3);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 165, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);
+            }
+        }
+
+        .upload {
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            padding: clamp(15px, 2vw, 20px);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid #60a5fa;
+        }
+
+        .upload::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: 18px;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.5), transparent 70%);
+            opacity: 0;
+            transition: 0.4s;
+            z-index: -1;
+        }
+
+        .upload:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 25px rgba(96, 165, 250, 0.5);
+        }
+
+        .upload:hover::before {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        input {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .left-panel,
+            .right-panel {
+                flex: 1 1 100%;
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+
+<body class="facial-theme">
+    <div class="app">
+        <div class="left-panel">
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="right-panel">
+            <!-- Sketchfab 3D model -->
+            <div class="card sketchfab-embed-wrapper">
+                <iframe title="Head Anatomy for Artist" frameborder="0" allowfullscreen mozallowfullscreen="true"
+                    webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking
+                    execution-while-out-of-viewport execution-while-not-rendered web-share
+                    src="https://sketchfab.com/models/99717ac9c0434ac59fc5efd3d1dc3471/embed">
+                </iframe>
+            </div>
+
+            <!-- Facial Health Stats -->
+            <div class="card">
+                <div class="stat">Score: <span id="scoreVal">--</span></div>
+                <div class="stat">Status: <span id="statusVal">--</span></div>
+            </div>
+
+            <div id="riskBox" class="card risk low">Normal</div>
+
+            <label class="card upload">
+                <div style="font-size:40px;">📤</div>
+                <div style="font-weight:600;">Upload Image</div>
+                <div style="font-size:13px;color:#666;">Select a photo for analysis</div>
+                <input type="file" id="imageInput" accept="image/*">
+            </label>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreVal = document.getElementById('scoreVal');
+        const statusVal = document.getElementById('statusVal');
+        const riskBox = document.getElementById('riskBox');
+        const imageInput = document.getElementById('imageInput');
+        let currentImage = null;
+
+        const faceMesh = new FaceMesh({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
+
+        faceMesh.onResults(results => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (currentImage) ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+            else { ctx.save(); ctx.scale(-1, 1); ctx.drawImage(results.image, -canvas.width, 0, canvas.width, canvas.height); ctx.restore(); }
+
+            if (!results.multiFaceLandmarks.length) {
+                riskBox.innerHTML = "No face detected";
+                return;
+            }
+
+            let lm = results.multiFaceLandmarks[0];
+            if (!currentImage) lm = lm.map(p => ({ x: 1 - p.x, y: p.y, z: p.z }));
+
+            const Lb = lm[70], Rb = lm[300], Le = lm[159], Re = lm[386], Lm = lm[61], Rm = lm[291];
+            const faceWidth = Math.abs(lm[234].x - lm[454].x);
+
+            // Facial symmetry score
+            const rawScore = (Math.abs(Lb.y - Rb.y) + Math.abs(Le.y - Re.y) + Math.abs(Lm.y - Rm.y)) / (3 * faceWidth);
+            let score = Math.min((rawScore / 0.06) * 100, 100), status = "Normal", cls = "low";
+            if (score > 70) { status = "High Risk"; cls = "high"; }
+            else if (score > 40) { status = "Moderate Risk"; cls = "mid"; }
+            scoreVal.innerHTML = Math.round(score) + " / 100";
+            statusVal.innerHTML = status;
+            riskBox.className = "card risk " + cls;
+            riskBox.innerHTML = status;
+
+            // Head tilt
+            const leftEye = lm[33], rightEye = lm[263];
+            const eyeSlope = Math.abs(leftEye.y - rightEye.y) / faceWidth;
+            if (eyeSlope > 0.03) {
+                riskBox.innerHTML = "Please face forward!";
+                riskBox.className = "card risk high";
+            }
+
+            // Lip tilt
+            const leftCorner = lm[61], rightCorner = lm[291], upperLip = lm[13], lowerLip = lm[14];
+            const lipTilt = Math.abs((upperLip.y + lowerLip.y) / 2 - (leftCorner.y + rightCorner.y) / 2) / faceWidth;
+            let lipStatus = "", lipBox = document.getElementById("lipBox");
+            if (lipTilt < 0.02) lipStatus = "Normal";
+            else if (lipTilt < 0.05) lipStatus = "Slight Tilt";
+            else lipStatus = "High Tilt";
+
+            if (!lipBox) {
+                lipBox = document.createElement("div");
+                lipBox.id = "lipBox";
+                lipBox.className = "card risk low";
+                lipBox.style.marginTop = "10px";
+                document.querySelector(".right-panel").appendChild(lipBox);
+            }
+            lipBox.innerText = "Lip: " + lipStatus;
+            if (lipStatus === "Normal") lipBox.className = "card risk low";
+            else if (lipStatus === "Slight Tilt") lipBox.className = "card risk mid";
+            else lipBox.className = "card risk high";
+
+            // Draw facial landmarks
+            drawConnectors(ctx, lm, FACEMESH_TESSELATION, { color: "rgba(150,150,150,0.2)", lineWidth: 0.5 });
+            drawConnectors(ctx, lm, FACEMESH_LEFT_EYEBROW, { color: "rgb(34,197,94)", lineWidth: 2 });
+            drawConnectors(ctx, lm, FACEMESH_RIGHT_EYEBROW, { color: "rgb(34,197,94)", lineWidth: 2 });
+            drawConnectors(ctx, lm, FACEMESH_LEFT_EYE, { color: "rgb(34,197,94)", lineWidth: 2 });
+            drawConnectors(ctx, lm, FACEMESH_RIGHT_EYE, { color: "rgb(34,197,94)", lineWidth: 2 });
+            drawConnectors(ctx, lm, FACEMESH_LIPS, { color: "rgb(34,197,94)", lineWidth: 2 });
+
+            const midX = lm[1].x * canvas.width;
+            ctx.beginPath();
+            ctx.moveTo(midX, 0);
+            ctx.lineTo(midX, canvas.height);
+            ctx.strokeStyle = "yellow";
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        });
+
+        const camera = new Camera(video, { onFrame: async () => { if (!currentImage) await faceMesh.send({ image: video }); }, width: 480, height: 360 });
+        camera.start();
+
+        imageInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = async () => { currentImage = img; await faceMesh.send({ image: img }); };
+            img.src = URL.createObjectURL(file);
+        });
+    </script>
+</body>
+
+</html>
